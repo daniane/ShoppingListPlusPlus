@@ -23,7 +23,8 @@ import com.udacity.firebase.shoppinglistplusplus.utils.Constants;
  */
 public abstract class BaseActivity extends AppCompatActivity implements
         GoogleApiClient.OnConnectionFailedListener {
-
+    protected String mProvider, mEncodedEmail;
+    /* Client used to interact with Google APIs. */
     protected GoogleApiClient mGoogleApiClient;
 
     @Override
@@ -39,10 +40,20 @@ public abstract class BaseActivity extends AppCompatActivity implements
          * Build a GoogleApiClient with access to the Google Sign-In API and the
          * options specified by gso.
          */
+
+        /* Setup the Google API object to allow Google+ logins */
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
                 .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
                 .build();
+
+        /**
+         * Getting mProvider and mEncodedEmail from SharedPreferences
+         */
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(BaseActivity.this);
+        /* Get mEncodedEmail and mProvider from SharedPreferences, use null as default value */
+        mEncodedEmail = sp.getString(Constants.KEY_ENCODED_EMAIL, null);
+        mProvider = sp.getString(Constants.KEY_PROVIDER, null);
     }
 
     @Override

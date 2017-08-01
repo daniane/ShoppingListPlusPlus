@@ -43,6 +43,7 @@ dependencies {
 
     compile 'com.firebase:firebase-client-android:2.4.0'
     compile 'com.google.firebase:firebase-auth:11.0.2'
+    compile 'com.google.firebase:firebase-database:11.0.2'
 
     /*FirebaseUI library*/
     compile 'com.firebaseui:firebase-ui:0.2.2'

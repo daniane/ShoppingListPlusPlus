@@ -2,38 +2,122 @@ package com.udacity.firebase.shoppinglistplusplus.ui;
 
 import android.app.DialogFragment;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.firebase.client.ChildEventListener;
+import com.firebase.client.DataSnapshot;
+import com.firebase.client.Firebase;
+import com.firebase.client.FirebaseError;
+import com.firebase.client.ValueEventListener;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.udacity.firebase.shoppinglistplusplus.R;
+import com.udacity.firebase.shoppinglistplusplus.model.User;
 import com.udacity.firebase.shoppinglistplusplus.ui.activeLists.AddListDialogFragment;
 import com.udacity.firebase.shoppinglistplusplus.ui.activeLists.ShoppingListsFragment;
 import com.udacity.firebase.shoppinglistplusplus.ui.meals.AddMealDialogFragment;
 import com.udacity.firebase.shoppinglistplusplus.ui.meals.MealsFragment;
+import com.udacity.firebase.shoppinglistplusplus.utils.Constants;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents the home screen of the app which
  * has a {@link ViewPager} with {@link ShoppingListsFragment} and {@link MealsFragment}
  */
 public class MainActivity extends BaseActivity {
+    private Firebase mUserRef;
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
+    private ValueEventListener mUserRefListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        /**
+         * Create Firebase references
+         *
+         */
+
+        mUserRef = new Firebase(Constants.FIREBASE_URL_USERS).child(mEncodedEmail);
 
         /**
          * Link layout elements from XML and setup the toolbar
          */
         initializeScreen();
+
+        /**
+         * Add ValueEventListeners to Firebase references
+         * to control get data and control behavior and visibility of elements
+         */
+        /*mUserRefListener = mUserRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                System.out.println("Entrou no listener");
+                User user = snapshot.getValue(User.class);
+                System.out.println("Snapshot Count" + snapshot.getChildrenCount());
+
+                *//*if (user != null) {
+                    *//*//**//* Assumes that the first word in the user's name is the user's first name. *//**//**//**//*
+                    String firstName = user.getName().split("\\s+")[0];
+                    String title = firstName + "'s Lists";
+                    setTitle(title);
+                }*//*
+            }
+
+
+            @Override
+            public void onCancelled(FirebaseError firebaseError) {
+                Log.e(LOG_TAG,
+                        getString(R.string.log_error_the_read_failed) +
+                                firebaseError.getMessage());
+            }
+        });*/
+
+       FirebaseAuth auth = FirebaseAuth.getInstance();
+        auth.addAuthStateListener(new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull final FirebaseAuth firebaseAuth) {
+                final FirebaseUser user = firebaseAuth.getCurrentUser();
+
+                if (user != null) {
+                    Log.i("AuthStateChanged", "User is signed in with uid: " + user.getUid());
+                    Log.i("AuthStateChanged", "Email: " + user.getEmail());
+                    Log.i("AuthStateChanged", "Name: " + user.getDisplayName());
+
+                    User user1 = new User();
+
+
+
+
+
+
+
+                } else {
+                    Log.i("AuthStateChanged", "No user is signed in.");
+                }
+            }
+        });
+
+
+
+
+
+
     }
 
 
@@ -56,6 +140,7 @@ public class MainActivity extends BaseActivity {
      */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
         return super.onOptionsItemSelected(item);
     }
 
@@ -63,6 +148,7 @@ public class MainActivity extends BaseActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        mUserRef.removeEventListener(mUserRefListener);
     }
 
     /**
@@ -90,7 +176,7 @@ public class MainActivity extends BaseActivity {
      */
     public void showAddListDialog(View view) {
         /* Create an instance of the dialog fragment and show it */
-        DialogFragment dialog = AddListDialogFragment.newInstance();
+        DialogFragment dialog = AddListDialogFragment.newInstance(mEncodedEmail);
         dialog.show(MainActivity.this.getFragmentManager(), "AddListDialogFragment");
     }
 

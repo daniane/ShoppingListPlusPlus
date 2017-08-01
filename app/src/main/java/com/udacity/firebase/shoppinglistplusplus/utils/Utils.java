@@ -22,4 +22,8 @@ public class Utils {
         mContext = con;
     }
 
+    public static String encodeEmail(String userEmail) {
+        return userEmail.replace(".", ",");
+    }
+
 }

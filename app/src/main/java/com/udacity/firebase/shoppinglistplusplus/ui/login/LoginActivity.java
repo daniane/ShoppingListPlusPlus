@@ -2,8 +2,10 @@ package com.udacity.firebase.shoppinglistplusplus.ui.login;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -40,6 +42,7 @@ import com.udacity.firebase.shoppinglistplusplus.R;
 import com.udacity.firebase.shoppinglistplusplus.ui.BaseActivity;
 import com.udacity.firebase.shoppinglistplusplus.ui.MainActivity;
 import com.udacity.firebase.shoppinglistplusplus.utils.Constants;
+import com.udacity.firebase.shoppinglistplusplus.utils.Utils;
 
 import java.io.IOException;
 
@@ -179,6 +182,21 @@ public class LoginActivity extends BaseActivity {
                             FirebaseUser user = mAuth.getCurrentUser();
                             mAuthProgressDialog.dismiss();
                             Log.i(LOG_TAG, Constants.PASSWORD_PROVIDER + " " + getString(R.string.log_message_auth_successful));
+
+                            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                            SharedPreferences.Editor spe = sp.edit();
+
+                            //if(user.getProviderId().equals(Constants.PASSWORD_PROVIDER)){
+                                //System.out.println("IF PASSWORD PROVIDER");
+                                setAuthenticatedUserPasswordProvider(user);
+                            //}
+                            //else {}
+
+                            /* Save provider name and encodedEmail for later use and start MainActivity */
+                            spe.putString(Constants.KEY_PROVIDER, user.getProviderId()).apply();
+                            spe.putString(Constants.KEY_ENCODED_EMAIL, mEncodedEmail).apply();
+
+
                             /* Go to main activity */
                             Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -258,7 +276,13 @@ public class LoginActivity extends BaseActivity {
      *
      * @param authData AuthData object returned from onAuthenticated
      */
-    private void setAuthenticatedUserPasswordProvider(AuthData authData) {
+    private void setAuthenticatedUserPasswordProvider(FirebaseUser authData) {
+        final String unprocessedEmail = authData.getEmail();
+        /**
+         * Encode user email replacing "." with ","
+         * to be able to use it as a Firebase db key
+         */
+        mEncodedEmail = Utils.encodeEmail(unprocessedEmail);
     }
 
     /**
