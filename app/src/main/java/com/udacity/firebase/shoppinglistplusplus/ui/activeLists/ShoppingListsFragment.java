@@ -2,7 +2,9 @@ package com.udacity.firebase.shoppinglistplusplus.ui.activeLists;
 
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +13,7 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.firebase.client.Firebase;
+import com.firebase.client.Query;
 import com.udacity.firebase.shoppinglistplusplus.R;
 import com.udacity.firebase.shoppinglistplusplus.model.ShoppingList;
 import com.udacity.firebase.shoppinglistplusplus.ui.activeListDetails.ActiveListDetailsActivity;
@@ -23,9 +26,9 @@ import com.udacity.firebase.shoppinglistplusplus.utils.Constants;
  * create an instance of this fragment.
  */
 public class ShoppingListsFragment extends Fragment {
-    private ListView mListView;
+    private String mEncodedEmail;
     private ActiveListAdapter mActiveListAdapter;
-
+    private ListView mListView;
 
     public ShoppingListsFragment() {
         /* Required empty public constructor */
@@ -35,9 +38,10 @@ public class ShoppingListsFragment extends Fragment {
      * Create fragment and pass bundle with data as it's arguments
      * Right now there are not arguments...but eventually there will be.
      */
-    public static ShoppingListsFragment newInstance() {
+    public static ShoppingListsFragment newInstance(String encodedEmail) {
         ShoppingListsFragment fragment = new ShoppingListsFragment();
         Bundle args = new Bundle();
+        args.putString(Constants.KEY_ENCODED_EMAIL, encodedEmail);
         fragment.setArguments(args);
         return fragment;
     }
@@ -49,35 +53,37 @@ public class ShoppingListsFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
+            mEncodedEmail = getArguments().getString(Constants.KEY_ENCODED_EMAIL);
         }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
         /**
          * Initialize UI elements
          */
         View rootView = inflater.inflate(R.layout.fragment_shopping_lists, container, false);
         initializeScreen(rootView);
 
-        /**
-         * Create Firebase references
-         */
-        Firebase activeListsRef = new Firebase(Constants.FIREBASE_URL_ACTIVE_LISTS);
-
-        /**
-         * Create the adapter, giving it the activity, model class, layout for each row in
-         * the list and finally, a reference to the Firebase location with the list data
-         */
-        mActiveListAdapter = new ActiveListAdapter(getActivity(), ShoppingList.class,
-                R.layout.single_active_list, activeListsRef);
-
-        /**
-         * Set the adapter to the mListView
-         */
-        mListView.setAdapter(mActiveListAdapter);
-
+//        /**
+//         * Create Firebase references
+//         */
+//        Firebase activeListsRef = new Firebase(Constants.FIREBASE_URL_ACTIVE_LISTS);
+//
+//        /**
+//         * Create the adapter, giving it the activity, model class, layout for each row in
+//         * the list and finally, a reference to the Firebase location with the list data
+//         */
+//        mActiveListAdapter = new ActiveListAdapter(getActivity(), ShoppingList.class,
+//                R.layout.single_active_list, activeListsRef, mEncodedEmail);
+//
+//
+//        /**
+//         * Set the adapter to the mListView
+//         */
+//        mListView.setAdapter(mActiveListAdapter);
 
         /**
          * Set interactive bits, such as click events and adapters
@@ -99,18 +105,58 @@ public class ShoppingListsFragment extends Fragment {
             }
         });
 
+
         return rootView;
     }
 
     /**
-     * Cleanup the adapter when activity is destroyed.
+     * Updates the order of mListView onResume to handle sortOrderChanges properly
      */
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mActiveListAdapter.cleanup();
+    public void onResume() {
+        super.onResume();
+        final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String sortOrder = sharedPref.getString(Constants.KEY_PREF_SORT_ORDER_LISTS, Constants.ORDER_BY_KEY);
+
+        Query orderedActiveUserListsRef;
+        Firebase activeListsRef = new Firebase(Constants.FIREBASE_URL_ACTIVE_LISTS);
+        /**
+         * Sort active lists by "date created"
+         * if it's been selected in the SettingsActivity
+         */
+        if (sortOrder.equals(Constants.ORDER_BY_KEY)) {
+            orderedActiveUserListsRef = activeListsRef.orderByKey();
+        } else {
+
+            /**
+             * Sort active by lists by name or datelastChanged. Otherwise
+             * depending on what's been selected in SettingsActivity
+             */
+
+            orderedActiveUserListsRef = activeListsRef.orderByChild(sortOrder);
+        }
+
+        /**
+         * Create the adapter with selected sort order
+         */
+        mActiveListAdapter = new ActiveListAdapter(getActivity(), ShoppingList.class,
+                R.layout.single_active_list, orderedActiveUserListsRef,
+                mEncodedEmail);
+
+        /**
+         * Set the adapter to the mListView
+         */
+        mListView.setAdapter(mActiveListAdapter);
     }
 
+    /**
+     * Cleanup the adapter when activity is paused.
+     */
+    @Override
+    public void onPause() {
+        super.onPause();
+        mActiveListAdapter.cleanup();
+    }
 
     /**
      * Link list view from XML

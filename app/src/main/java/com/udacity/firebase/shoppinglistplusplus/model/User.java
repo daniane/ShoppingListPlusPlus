@@ -30,6 +30,11 @@ public class User {
         this.timestampJoined = timestampJoined;
     }
 
+    public User(String name, String email) {
+        this.email = email;
+        this.name = name;
+    }
+
     public String getName() {
         return name;
     }

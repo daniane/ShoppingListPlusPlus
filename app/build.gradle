@@ -10,6 +10,7 @@ android {
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
+
     }
     buildTypes {
         release {
@@ -47,6 +48,7 @@ dependencies {
 
     /*FirebaseUI library*/
     compile 'com.firebaseui:firebase-ui:0.2.2'
+    compile 'com.firebaseui:firebase-ui-auth:0.6.0'
 
 
     compile 'com.google.android.gms:play-services-ads:11.0.2'
